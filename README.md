@@ -186,3 +186,4 @@ The server will connect to MongoDB, verify indexes, and listen at [http://localh
    - `TOKEN_ISSUER`: Your frontend BetterAuth URL (e.g. `https://booknook-client.vercel.app`).
    - `TOKEN_AUDIENCE`: Your Render backend URL (e.g. `https://booknook-api.onrender.com`).
 5. Render will automatically expose `PORT` and route traffic to your service. Verify using `GET /health`.
+

@@ -5,8 +5,7 @@ let client = null;
 let db = null;
 
 /**
- * Connect to MongoDB and initialize singleton DB instance
- * Configured with resilient connection pooling and server selection timeouts for production.
+ * MongoDB ডাটাবেজ কানেক্ট করার ফাংশন
  */
 export async function connectToMongoDB() {
   if (db && client) {
@@ -14,15 +13,10 @@ export async function connectToMongoDB() {
   }
 
   try {
-    client = new MongoClient(ENV.MONGODB_URL, {
-      maxPoolSize: 20,
-      minPoolSize: 2,
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 10000,
-    });
+    client = new MongoClient(ENV.MONGODB_URL);
     await client.connect();
     db = client.db(ENV.DB_NAME);
-    console.log(`[DATABASE] Connected to MongoDB successfully (database: ${ENV.DB_NAME})`);
+    console.log(`[DATABASE] MongoDB Connected successfully (Database: ${ENV.DB_NAME})`);
     return { client, db };
   } catch (err) {
     console.error("[DATABASE ERROR] Failed to connect to MongoDB:", err.message);
@@ -31,7 +25,7 @@ export async function connectToMongoDB() {
 }
 
 /**
- * Set test database instance (for isolated testing)
+ * টেস্টের জন্য মক ডাটাবেজ সেট করার ফাংশন
  */
 export function setDb(testDb, testClient = null) {
   db = testDb;
@@ -39,7 +33,7 @@ export function setDb(testDb, testClient = null) {
 }
 
 /**
- * Get active database instance
+ * রানিং ডাটাবেজ ইনস্ট্যান্স পাওয়ার ফাংশন
  */
 export function getDb() {
   if (!db) {
@@ -49,14 +43,14 @@ export function getDb() {
 }
 
 /**
- * Get active MongoClient instance (or null if mock db injected)
+ * MongoClient পাওয়ার ফাংশন
  */
 export function getClient() {
   return client;
 }
 
 /**
- * Close database connection cleanly
+ * ডাটাবেজ কানেকশন বন্ধ করার ফাংশন
  */
 export async function closeMongoDB() {
   if (client) {

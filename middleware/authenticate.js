@@ -1,21 +1,15 @@
 import * as jose from "jose";
 import { ENV } from "../config/env.js";
 
-const JWT_SECRET = ENV.BETTER_AUTH_SECRET;
-const ISSUER = ENV.TOKEN_ISSUER;
-const AUDIENCE = ENV.TOKEN_AUDIENCE;
-const JWKS_URL = ENV.JWKS_URL;
-
 let remoteJWKS = null;
 try {
-  remoteJWKS = jose.createRemoteJWKSet(new URL(JWKS_URL));
-} catch (e) {
-  console.warn("Could not initialize remote JWKS set, using secret key:", e.message);
-}
+  if (ENV.JWKS_URL) {
+    remoteJWKS = jose.createRemoteJWKSet(new URL(ENV.JWKS_URL));
+  }
+} catch (_) {}
 
 /**
- * Express Authentication Middleware
- * Validates Bearer JWT issued by BetterAuth before granting access to protected routes.
+ * ইউজার ভেরিফিকেশন মিডলওয়্যার (BetterAuth JWT)
  */
 export async function authenticate(req, res, next) {
   try {
@@ -43,30 +37,28 @@ export async function authenticate(req, res, next) {
 
     let verifiedPayload = null;
 
-    // 1. Try remote JWKS if available
+    // ১. রিমোট JWKS দিয়ে যাচাইয়ের চেষ্টা
     if (remoteJWKS) {
       try {
         const { payload } = await jose.jwtVerify(token, remoteJWKS, {
-          issuer: ISSUER,
-          audience: AUDIENCE,
+          issuer: ENV.TOKEN_ISSUER,
+          audience: ENV.TOKEN_AUDIENCE,
         });
         verifiedPayload = payload;
-      } catch (jwksErr) {
-        // Fallback to symmetric secret verification if JWKS didn't match
-      }
+      } catch (_) {}
     }
 
-    // 2. Fallback to symmetric secret key verification
+    // ২. সিমেট্রিক সিক্রেট কি দিয়ে যাচাই (Secret Key)
     if (!verifiedPayload) {
-      const secretKey = new TextEncoder().encode(JWT_SECRET);
+      const secretKey = new TextEncoder().encode(ENV.BETTER_AUTH_SECRET);
       const { payload } = await jose.jwtVerify(token, secretKey, {
-        issuer: ISSUER,
-        audience: AUDIENCE,
+        issuer: ENV.TOKEN_ISSUER,
+        audience: ENV.TOKEN_AUDIENCE,
       });
       verifiedPayload = payload;
     }
 
-    // 3. Ensure subject exists
+    // ৩. টোকেনে sub (User ID) আছে কি না চেক
     if (!verifiedPayload.sub) {
       return res.status(401).json({
         success: false,
@@ -77,7 +69,7 @@ export async function authenticate(req, res, next) {
       });
     }
 
-    // 4. Attach verified user context to request
+    // ৪. ইউজার অবজেক্ট রিকোয়েস্টে যুক্ত করা
     req.user = {
       id: String(verifiedPayload.sub),
       email: verifiedPayload.email || "",
@@ -107,4 +99,3 @@ export async function authenticate(req, res, next) {
     });
   }
 }
-
