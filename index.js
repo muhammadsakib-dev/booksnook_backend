@@ -16,7 +16,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { ENV } from "./config/env.js";
-import { connectToMongoDB, closeMongoDB, getDb, setDb, getClient } from "./config/db.js";
+import { connectToMongoDB, getDb, getClient } from "./config/db.js";
 import { sanitizeInputs } from "./middleware/security.js";
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
 
@@ -35,7 +35,6 @@ export const app = express();
 app.use(
   cors({
     origin: (origin, callback) => {
-      // রিকোয়েস্টে origin না থাকলে (যেমন Postman) বা ফ্রন্টএন্ড থেকে আসলে এলাউ করা হবে
       if (!origin) return callback(null, true);
       const allowed = ENV.ALLOWED_ORIGIN || "http://localhost:3000";
       if (allowed === "*" || allowed.includes(origin) || origin.endsWith(".vercel.app")) {
@@ -82,17 +81,6 @@ export async function startServer() {
       console.log(`[SERVER] BookNook running on http://localhost:${ENV.PORT}`);
     });
 
-    const shutdown = async (signal) => {
-      console.log(`[SERVER] Received ${signal}. Shutting down...`);
-      server.close(async () => {
-        await closeMongoDB();
-        process.exit(0);
-      });
-    };
-
-    process.on("SIGTERM", () => shutdown("SIGTERM"));
-    process.on("SIGINT", () => shutdown("SIGINT"));
-
     return server;
   } catch (err) {
     console.error("[SERVER FATAL] Failed to start:", err);
@@ -105,5 +93,5 @@ if (process.argv[1]?.endsWith("index.js") || process.argv[1]?.endsWith("server.j
   startServer();
 }
 
-export { connectToMongoDB, setDb, getDb, getClient, closeMongoDB };
+export { connectToMongoDB, getDb, getClient };
 export default app;

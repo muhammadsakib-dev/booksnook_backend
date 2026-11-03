@@ -60,21 +60,20 @@ booksnook_backend/
 │       ├── borrows.routes.js
 │       ├── borrows.service.js
 │       └── borrows.validator.js
+├── routes/
+│   ├── getRoutes.js          # All GET routes (catalog, book details, borrows, health)
+│   ├── postRoutes.js         # All POST routes (add book, borrow checkout)
+│   ├── updateRoutes.js       # All PATCH & PUT routes (edit book, return loan)
+│   └── deleteRoutes.js       # All DELETE routes (soft delete, return loan)
 ├── services/
 │   ├── inventoryService.js   # Atomic transactions, batch checkouts & returns
 │   └── migrationService.js   # Safe index provisioning & data normalizer
-├── tests/
-│   ├── api.test.js           # Express route & CRUD integration tests
-│   ├── e2e_security.test.js  # JWT tampering, concurrency & loan rules
-│   └── inventory.test.js     # Stock decrements, rollbacks & batch safety
 ├── utils/
 │   ├── apiResponse.js        # Standardized JSend-style JSON responses
 │   ├── AppError.js           # Structured operational error class
 │   ├── asyncHandler.js       # Async controller wrapper
 │   └── idHelper.js           # Safe ObjectId parser and validator
-├── app.js                    # Express app configuration & middleware
-├── server.js                 # HTTP listener & graceful shutdown handlers
-├── index.js                  # Production entry point
+├── index.js                  # Main server entry point & Express configuration
 └── package.json
 ```
 

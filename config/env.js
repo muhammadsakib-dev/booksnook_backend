@@ -1,9 +1,6 @@
+// Complete Environment Variables
 import "dotenv/config";
 
-/**
- * সেন্ট্রাল এনভায়রনমেন্ট কনফিগারেশন
- * সরাসরি .env ফাইল থেকে ভ্যালুগুলো রিড করা হচ্ছে (কোনো অতিরিক্ত || ফলব্যাক ছাড়া)
- */
 export const ENV = {
   PORT: process.env.PORT,
   NODE_ENV: process.env.NODE_ENV,
