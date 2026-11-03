@@ -1,44 +1,39 @@
+
 import { AppError } from "../utils/AppError.js";
 
 /**
- * Recursively inspects an object to ensure no MongoDB query operators (starting with '$')
- * are injected in user-supplied body or query parameters.
+ * Check nested objects and arrays for MongoDB query operators.
  */
 function checkForMongoOperators(obj, path = "") {
-  if (!obj || typeof obj !== "object") return;
+  if (obj === null || typeof obj !== "object") return;
 
-  for (const key of Object.keys(obj)) {
+  for (const [key, value] of Object.entries(obj)) {
+    const currentPath = path ? `${path}.${key}` : key;
+
+    // Reject keys starting with "$"
     if (key.startsWith("$")) {
       throw new AppError(
-        `Disallowed operator "${key}" detected in request payload at "${path ? `${path}.${key}` : key}".`,
+        `MongoDB operator "${key}" is not allowed at "${currentPath}".`,
         400,
         "INVALID_INPUT"
       );
     }
 
-    if (typeof obj[key] === "object" && obj[key] !== null) {
-      checkForMongoOperators(obj[key], path ? `${path}.${key}` : key);
-    }
+    // Check nested objects and arrays recursively
+    checkForMongoOperators(value, currentPath);
   }
 }
 
 /**
- * Security Middleware: Sanitizes inputs and guards against NoSQL operator injection
+ * Middleware to prevent NoSQL operator injection.
  */
 export function sanitizeInputs(req, res, next) {
   try {
-    if (req.body && typeof req.body === "object") {
-      checkForMongoOperators(req.body);
-    }
-    if (req.query && typeof req.query === "object") {
-      checkForMongoOperators(req.query);
-    }
-    if (req.params && typeof req.params === "object") {
-      checkForMongoOperators(req.params);
-    }
+    // Validate all incoming request data
+    [req.body, req.query, req.params].forEach(checkForMongoOperators);
+
     next();
-  } catch (err) {
-    next(err);
+  } catch (error) {
+    next(error);
   }
 }
-
