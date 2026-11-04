@@ -9,9 +9,7 @@ import { borrowBooks } from "../services/inventoryService.js";
 
 const router = Router();
 
-// =============================================================================
-// ১. নতুন বই যোগ করা (POST /books)
-// =============================================================================
+// Add book (POST /books)
 router.post(
   "/books",
   authenticate,
@@ -31,9 +29,8 @@ router.post(
 
     const author = (body.author || body.authorName || "Unknown Author").trim();
     const category = (body.category || body.genre || "Fiction").trim();
-
-    const rawCopies = body.copies !== undefined ? body.copies : (body.totalCopies !== undefined ? body.totalCopies : body.quantity);
-    const totalCopies = rawCopies !== undefined ? Number(rawCopies) : 1;
+    const rawCopies = body.copies ?? body.totalCopies ?? body.quantity ?? 1;
+    const totalCopies = Number(rawCopies);
 
     if (isNaN(totalCopies) || !Number.isInteger(totalCopies) || totalCopies < 1) {
       throw new AppError("totalCopies must be a positive integer greater than or equal to 1", 400, "VALIDATION_ERROR");
@@ -89,9 +86,7 @@ router.post(
   })
 );
 
-// =============================================================================
-// ২. বই ধার নেওয়া (POST /borrows) - একক বা একাধিক বই একসাথে চেকআউট
-// =============================================================================
+// Borrow books (POST /borrows)
 router.post(
   "/borrows",
   authenticate,

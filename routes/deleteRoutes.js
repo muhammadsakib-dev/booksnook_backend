@@ -9,9 +9,7 @@ import { deleteBook, returnBook } from "../services/inventoryService.js";
 
 const router = Router();
 
-// =============================================================================
-// ১. বই মুছে ফেলা (DELETE /books/:id) - সফট ডিলিট
-// =============================================================================
+// Delete book (DELETE /books/:id)
 router.delete(
   "/books/:id",
   authenticate,
@@ -39,9 +37,7 @@ router.delete(
   })
 );
 
-// =============================================================================
-// ২. ধার করা বই ফেরত দেওয়া (DELETE /borrows/:id)
-// =============================================================================
+// Return book loan (DELETE /borrows/:id)
 router.delete(
   "/borrows/:id",
   authenticate,

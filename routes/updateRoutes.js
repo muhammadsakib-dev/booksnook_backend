@@ -9,7 +9,7 @@ import { updateBook, returnBook } from "../services/inventoryService.js";
 
 const router = Router();
 
-// বই আপডেটের ডাটা প্রসেস করার হেল্পার
+// Parse book update body
 function parseBookUpdateBody(body) {
   if (!body || typeof body !== "object") {
     throw new AppError("Request body must be a valid JSON object", 400, "VALIDATION_ERROR");
@@ -76,75 +76,38 @@ function parseBookUpdateBody(body) {
   return patch;
 }
 
-// =============================================================================
-// ১. বই আপডেট করা (PATCH /books/:id)
-// =============================================================================
-router.patch(
-  "/books/:id",
-  authenticate,
-  asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    if (!id || typeof id !== "string" || !id.trim()) {
-      throw new AppError("Book ID parameter is required", 400, "INVALID_ID");
-    }
-    if (id.length === 24 && !isValidObjectId(id)) {
-      throw new AppError("Malformed ObjectId parameter", 400, "INVALID_ID");
-    }
+// Handler for book updates (PATCH / PUT)
+const handleBookUpdate = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  if (!id || typeof id !== "string" || !id.trim()) {
+    throw new AppError("Book ID parameter is required", 400, "INVALID_ID");
+  }
+  if (id.length === 24 && !isValidObjectId(id)) {
+    throw new AppError("Malformed ObjectId parameter", 400, "INVALID_ID");
+  }
 
-    const updateData = parseBookUpdateBody(req.body);
-    const db = getDb();
+  const updateData = parseBookUpdateBody(req.body);
+  const db = getDb();
 
-    const result = await updateBook({
-      db,
-      user: req.user,
-      bookId: id,
-      updateData,
-    });
+  const result = await updateBook({
+    db,
+    user: req.user,
+    bookId: id,
+    updateData,
+  });
 
-    return sendSuccess(res, {
-      statusCode: 200,
-      message: "Book updated successfully",
-      data: result,
-    });
-  })
-);
+  return sendSuccess(res, {
+    statusCode: 200,
+    message: "Book updated successfully",
+    data: result,
+  });
+});
 
-// =============================================================================
-// ২. বই আপডেট করা (PUT /books/:id - ব্যাকওয়ার্ড কম্প্যাটিবিলিটি)
-// =============================================================================
-router.put(
-  "/books/:id",
-  authenticate,
-  asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    if (!id || typeof id !== "string" || !id.trim()) {
-      throw new AppError("Book ID parameter is required", 400, "INVALID_ID");
-    }
-    if (id.length === 24 && !isValidObjectId(id)) {
-      throw new AppError("Malformed ObjectId parameter", 400, "INVALID_ID");
-    }
+// Update book (PATCH & PUT)
+router.patch("/books/:id", authenticate, handleBookUpdate);
+router.put("/books/:id", authenticate, handleBookUpdate);
 
-    const updateData = parseBookUpdateBody(req.body);
-    const db = getDb();
-
-    const result = await updateBook({
-      db,
-      user: req.user,
-      bookId: id,
-      updateData,
-    });
-
-    return sendSuccess(res, {
-      statusCode: 200,
-      message: "Book updated successfully",
-      data: result,
-    });
-  })
-);
-
-// =============================================================================
-// ৩. ধার করা বই ফেরত দেওয়া (PUT /borrows/:id/return)
-// =============================================================================
+// Return book loan (PUT)
 router.put(
   "/borrows/:id/return",
   authenticate,

@@ -1,27 +1,10 @@
 import { ObjectId } from "mongodb";
+import { getBookQuery, getBorrowQuery } from "../utils/idHelper.js";
+
+export { getBookQuery, getBorrowQuery };
 
 /**
- * Normalizes ID string to ObjectId or string filter
- */
-export function getBookQuery(id) {
-  let query = { _id: id };
-  if (ObjectId.isValid(id)) {
-    query = { $or: [{ _id: new ObjectId(id) }, { _id: id }] };
-  }
-  return query;
-}
-
-export function getBorrowQuery(id) {
-  let query = { _id: id };
-  if (ObjectId.isValid(id)) {
-    query = { $or: [{ _id: new ObjectId(id) }, { _id: id }] };
-  }
-  return query;
-}
-
-/**
- * Helper to run an operation inside a MongoDB transaction if supported,
- * or with compensation rollback if transactions are not supported.
+ * Transaction or compensation helper
  */
 async function withTransactionOrCompensation(client, fn) {
   let session = null;
@@ -168,7 +151,12 @@ export async function borrowBooks({ client, db, user, items }) {
           bookId,
           bookTitle: book.title || book.bookTitle || "Untitled Book",
           bookAuthor: book.author || book.authorName || "Unknown Author",
-          bookImage: book.image || book.coverImage || "",
+          bookImage:
+            book.image ||
+            book.coverImage ||
+            book.imageUrl ||
+            book.cover_image ||
+            "",
           quantity,
           userId: user.id,
           userEmail: user.email,

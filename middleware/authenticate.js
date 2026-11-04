@@ -12,7 +12,7 @@ const verificationKey = ENV.JWKS_URL
 
 export async function authenticate(req, res, next) {
   try {
-    // ১. Authorization হেডার থেকে Bearer টোকেন নেওয়া
+    // Extract Bearer token
     const authHeader = req.headers.authorization;
     const token = authHeader?.startsWith("Bearer ")
       ? authHeader.slice(7).trim()
@@ -26,13 +26,13 @@ export async function authenticate(req, res, next) {
       });
     }
 
-    // ২. সিক্রেট কি দিয়ে JWT টোকেন ভেরিফাই করা
+    // Verify JWT token
     const { payload } = await jose.jwtVerify(token, verificationKey, {
       issuer: ENV.TOKEN_ISSUER,
       audience: ENV.TOKEN_AUDIENCE,
     });
 
-    // ৩. টোকেন থেকে প্রয়োজনীয় ইউজারের তথ্য req.user-এ রাখা
+    // Populate user context
     req.user = {
       id: payload.sub,
       email: payload.email || "",
@@ -40,7 +40,7 @@ export async function authenticate(req, res, next) {
       role: payload.role || "reader",
     };
 
-    // ৪. অনুমোদন সম্পন্ন, পরবর্তী কন্ট্রোলারে পাঠানো
+    // Forward to next handler
     return next();
   } catch (error) {
     return res.status(401).json({

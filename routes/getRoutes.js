@@ -9,9 +9,7 @@ import { reconcileInventory } from "../services/inventoryService.js";
 
 const router = Router();
 
-// =============================================================================
-// ১. বেসিক হেলথ চেক (GET / এবং GET /health)
-// =============================================================================
+// Health check endpoints
 router.get("/", (req, res) => {
   return sendSuccess(res, {
     message: "BookNook Backend Service is Running!",
@@ -34,9 +32,7 @@ router.get("/health", (req, res) => {
   });
 });
 
-// =============================================================================
-// ২. বইয়ের তালিকা দেখা (GET /books) - সার্চ, ফিল্টারিং, সর্টিং এবং পেজিনেশন সহ
-// =============================================================================
+// Get books catalog (GET /books)
 router.get(
   "/books",
   asyncHandler(async (req, res) => {
@@ -46,24 +42,24 @@ router.get(
 
     const filter = { isDeleted: { $ne: true } };
 
-    // নির্দিষ্ট ইউজারের যোগ করা বই ফিল্টার
+    // Filter by owner
     if (ownerUserId) {
       filter.ownerUserId = String(ownerUserId);
     }
 
-    // ক্যাটাগরি ফিল্টার
+    // Filter by category
     if (category && category !== "All") {
       filter.category = category;
     }
 
-    // টাইটেল বা লেখকের নামে সার্চ
+    // Search by title or author
     if (search && typeof search === "string" && search.trim()) {
       const cleanSearch = search.trim();
       const searchRegex = new RegExp(cleanSearch, "i");
       filter.$or = [{ title: searchRegex }, { author: searchRegex }];
     }
 
-    // সর্টিং অপশন
+    // Sort options
     let sortOptions = { createdAt: -1 };
     if (sort === "copies-desc") {
       sortOptions = { availableCopies: -1 };
@@ -75,7 +71,7 @@ router.get(
       sortOptions = { createdAt: -1 };
     }
 
-    // পেজিনেশন হ্যান্ডলিং
+    // Pagination
     const isPaginated = page !== undefined || limit !== undefined;
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 12));
@@ -115,9 +111,7 @@ router.get(
   })
 );
 
-// =============================================================================
-// ৩. একটি নির্দিষ্ট বইয়ের বিস্তারিত তথ্য দেখা (GET /books/:id)
-// =============================================================================
+// Get single book details (GET /books/:id)
 router.get(
   "/books/:id",
   asyncHandler(async (req, res) => {
@@ -149,9 +143,7 @@ router.get(
   })
 );
 
-// =============================================================================
-// ৪. ইউজারের নিজের ধার করা বইয়ের লিস্ট দেখা (GET /borrows)
-// =============================================================================
+// Get user borrow records (GET /borrows)
 router.get(
   "/borrows",
   authenticate,
@@ -164,10 +156,26 @@ router.get(
       query.status = req.query.status;
     }
 
+    const booksCollection = db.collection("books");
     const borrows = await borrowsCollection
       .find(query)
       .sort({ borrowedAt: -1, createdAt: -1 })
       .toArray();
+
+    // Populate book cover image if missing
+    for (const b of borrows) {
+      if (!b.bookImage || b.bookImage.trim() === "") {
+        const book = await booksCollection.findOne(getBookQuery(b.bookId));
+        if (book) {
+          b.bookImage =
+            book.imageUrl ||
+            book.image ||
+            book.coverImage ||
+            book.cover_image ||
+            "";
+        }
+      }
+    }
 
     return sendSuccess(res, {
       statusCode: 200,
@@ -180,9 +188,7 @@ router.get(
   })
 );
 
-// =============================================================================
-// ৫. ইনভেন্টরি রিকনসিলিয়েশন অডিট (GET /inventory/reconcile)
-// =============================================================================
+// Inventory reconciliation audit (GET /inventory/reconcile)
 router.get(
   "/inventory/reconcile",
   authenticate,
