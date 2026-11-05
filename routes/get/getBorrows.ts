@@ -15,7 +15,11 @@ router.get(
     const db = getDb();
     const borrowsCollection = db.collection("borrows");
 
-    const query: Record<string, any> = { userId: req.user.id };
+    const isOwnerRole = req.query.role === "owner";
+    const query: Record<string, any> = isOwnerRole
+      ? { ownerUserId: req.user.id }
+      : { userId: req.user.id };
+
     if (req.query.status && req.query.status !== "all") {
       query.status = req.query.status;
     }
