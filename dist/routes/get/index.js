@@ -1,0 +1,11 @@
+import { Router } from "express";
+import getHealthRoutes from "./getHealth.js";
+import getBooksRoutes from "./getBooks.js";
+import getBookByIdRoutes from "./getBookById.js";
+import getBorrowsRoutes from "./getBorrows.js";
+const router = Router();
+router.use(getHealthRoutes);
+router.use(getBooksRoutes);
+router.use(getBookByIdRoutes);
+router.use(getBorrowsRoutes);
+export default router;

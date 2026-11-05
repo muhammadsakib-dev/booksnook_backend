@@ -5,11 +5,12 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
-    "start": "node index.js",
-    "migrate": "node services/migrationService.js"
-  },
+  "dev": "nodemon --exec tsx index.ts",
+  "build": "tsc",
+  "start": "tsx index.ts"
+},
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^18.0.9",
@@ -17,5 +18,12 @@
     "jose": "^6.2.14",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.8.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
   }
 }
