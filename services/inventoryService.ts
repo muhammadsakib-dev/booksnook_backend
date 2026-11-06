@@ -24,7 +24,6 @@ export async function borrowBooks({
   user,
   items,
 }: {
-  client?: any;
   db: Db;
   user: InventoryUser;
   items: BorrowItem[];
@@ -149,7 +148,6 @@ export async function returnBook({
   user,
   borrowId,
 }: {
-  client?: any;
   db: Db;
   user: InventoryUser;
   borrowId: string;
@@ -528,15 +526,15 @@ export async function deleteBook({
     throw new AppError("You can delete only your own contributed books", 403, "FORBIDDEN");
   }
 
-  // Check active loans
+  // Check active or in-flight loans
   const activeLoans = await borrowsColl.countDocuments({
     bookId: String(bookId),
-    status: "Active",
+    status: { $in: ["Active", "Pending", "Return Pending"] },
   });
 
   if (activeLoans > 0) {
     throw new AppError(
-      `Cannot delete book while ${activeLoans} active borrow loan(s) exist. Wait until all copies are returned.`,
+      `Cannot delete book while ${activeLoans} active or pending borrow request(s) exist. Wait until all loans are returned or resolved.`,
       400,
       "CANNOT_DELETE_ACTIVE_LOANS"
     );
@@ -599,10 +597,15 @@ export async function updateBook({
       throw new AppError("Total copies must be at least 1", 400, "VALIDATION_ERROR");
     }
 
-    // Aggregate active borrow quantities for this book
+    // Aggregate active and reserved borrow quantities for this book
     const activeBorrowStats = await borrowsColl
       .aggregate([
-        { $match: { bookId: String(bookId), status: "Active" } },
+        {
+          $match: {
+            bookId: String(bookId),
+            status: { $in: ["Active", "Pending", "Return Pending"] },
+          },
+        },
         { $group: { _id: null, totalBorrowed: { $sum: "$quantity" } } },
       ])
       .toArray();

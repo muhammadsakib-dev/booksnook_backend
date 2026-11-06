@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { getDb, getClient } from "../../config/db.js";
+import { getDb } from "../../config/db.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
@@ -23,10 +23,8 @@ router.put(
     }
 
     const db = getDb();
-    const client = getClient();
 
     const result = await returnBook({
-      client,
       db,
       user: req.user,
       borrowId: id,
@@ -36,7 +34,6 @@ router.put(
       statusCode: 200,
       message: "Book returned successfully. Inventory updated.",
       data: result,
-      extra: result,
     });
   })
 );

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { getDb, getClient } from "../../config/db.js";
+import { getDb } from "../../config/db.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
@@ -64,10 +64,8 @@ router.post(
     }
 
     const db = getDb();
-    const client = getClient();
 
     const createdBorrows = await borrowBooks({
-      client,
       db,
       user: req.user,
       items: validatedItems,
@@ -80,10 +78,6 @@ router.post(
       statusCode: 201,
       message,
       data: createdBorrows,
-      extra: {
-        borrow: createdBorrows[0],
-        borrows: createdBorrows,
-      },
     });
   })
 );

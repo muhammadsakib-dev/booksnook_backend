@@ -10,36 +10,38 @@ import { parseBookUpdateBody } from "../../utils/parseBookUpdate.js";
 
 const router = Router();
 
-// Update book (PATCH /books/:id)
-router.patch(
-  "/books/:id",
-  authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.params;
-    if (!id || typeof id !== "string" || !id.trim()) {
-      throw new AppError("Book ID parameter is required", 400, "INVALID_ID");
-    }
-    if (id.length === 24 && !isValidObjectId(id)) {
-      throw new AppError("Malformed ObjectId parameter", 400, "INVALID_ID");
-    }
+// Handler for updating book details
+const handleUpdateBook = asyncHandler(async (req: Request, res: Response) => {
+  const id = String(req.params.id || "").trim();
+  if (!id) {
+    throw new AppError("Book ID parameter is required", 400, "INVALID_ID");
+  }
+  if (id.length === 24 && !isValidObjectId(id)) {
+    throw new AppError("Malformed ObjectId parameter", 400, "INVALID_ID");
+  }
 
-    const updateData = parseBookUpdateBody(req.body);
-    const db = getDb();
+  const updateData = parseBookUpdateBody(req.body);
+  const db = getDb();
 
-    const result = await updateBook({
-      db,
-      user: req.user,
-      bookId: id,
-      updateData,
-    });
+  const result = await updateBook({
+    db,
+    user: req.user,
+    bookId: id,
+    updateData,
+  });
 
-    return sendSuccess(res, {
-      statusCode: 200,
-      message: "Book updated successfully",
-      data: result,
-    });
-  })
-);
+  return sendSuccess(res, {
+    statusCode: 200,
+    message: "Book updated successfully",
+    data: result,
+  });
+});
+
+// Support both PATCH and PUT on /books/:id
+router
+  .route("/books/:id")
+  .patch(authenticate, handleUpdateBook)
+  .put(authenticate, handleUpdateBook);
 
 export default router;
 

@@ -35,10 +35,30 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       });
     }
 
-    const { payload } = await jose.jwtVerify(token, verificationKey, {
-      issuer: ENV.TOKEN_ISSUER,
-      audience: ENV.TOKEN_AUDIENCE,
-    });
+    let payload: jose.JWTPayload;
+
+    try {
+      const result = await jose.jwtVerify(token, verificationKey, {
+        issuer: ENV.TOKEN_ISSUER,
+        audience: ENV.TOKEN_AUDIENCE,
+      });
+      payload = result.payload;
+    } catch (jwksErr: any) {
+      if (ENV.BETTER_AUTH_SECRET) {
+        try {
+          const secretKey = new TextEncoder().encode(ENV.BETTER_AUTH_SECRET);
+          const result = await jose.jwtVerify(token, secretKey, {
+            issuer: ENV.TOKEN_ISSUER,
+            audience: ENV.TOKEN_AUDIENCE,
+          });
+          payload = result.payload;
+        } catch {
+          throw jwksErr;
+        }
+      } else {
+        throw jwksErr;
+      }
+    }
 
     req.user = {
       id: String(payload.sub),

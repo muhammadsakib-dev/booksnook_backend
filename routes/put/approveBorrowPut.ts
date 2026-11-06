@@ -42,7 +42,6 @@ router.put(
       statusCode: 200,
       message: "Borrow request approved successfully. Loan is now active.",
       data: result,
-      extra: result,
     });
   })
 );
@@ -68,7 +67,6 @@ router.put(
       statusCode: 200,
       message: "Borrow request resolved. Reserved inventory restored.",
       data: result,
-      extra: result,
     });
   })
 );
@@ -92,7 +90,6 @@ router.put(
       statusCode: 200,
       message: "Book return submitted. Waiting for contributor confirmation.",
       data: result,
-      extra: result,
     });
   })
 );
@@ -116,7 +113,6 @@ router.put(
       statusCode: 200,
       message: "Return confirmed successfully. Book copies restored to catalog.",
       data: result,
-      extra: result,
     });
   })
 );

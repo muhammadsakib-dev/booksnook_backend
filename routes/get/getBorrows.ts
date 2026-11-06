@@ -44,9 +44,6 @@ router.get(
       statusCode: 200,
       message: "Borrow records retrieved successfully",
       data: borrows,
-      extra: {
-        borrows,
-      },
     });
   })
 );

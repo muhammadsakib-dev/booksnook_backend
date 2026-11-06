@@ -28,7 +28,8 @@ router.get(
     // Search by title or author
     if (search && typeof search === "string" && search.trim()) {
       const cleanSearch = search.trim();
-      const searchRegex = new RegExp(cleanSearch, "i");
+      const escapedSearch = cleanSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const searchRegex = new RegExp(escapedSearch, "i");
       filter.$or = [{ title: searchRegex }, { author: searchRegex }];
     }
 
@@ -40,8 +41,6 @@ router.get(
       sortOptions = { rating: -1 };
     } else if (sort === "title-asc") {
       sortOptions = { title: 1 };
-    } else if (sort === "newest") {
-      sortOptions = { createdAt: -1 };
     }
 
     // Pagination
@@ -67,7 +66,6 @@ router.get(
             total,
             totalPages: Math.ceil(total / limitNum),
           },
-          books,
         },
       });
     }
@@ -77,9 +75,6 @@ router.get(
       statusCode: 200,
       message: "Books catalog retrieved successfully",
       data: books,
-      extra: {
-        books,
-      },
     });
   })
 );

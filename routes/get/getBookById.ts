@@ -32,9 +32,6 @@ router.get(
       statusCode: 200,
       message: "Book details retrieved successfully",
       data: book,
-      extra: {
-        book,
-      },
     });
   })
 );

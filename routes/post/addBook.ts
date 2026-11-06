@@ -64,7 +64,6 @@ router.post(
       data: createdBook,
       extra: {
         insertedId: createdBook._id,
-        book: createdBook,
       },
     });
   })

@@ -1,14 +1,3 @@
-/**
- * BookNook Backend - Application Entry Point
- *
- * Modular Route Architecture:
- * - GET: routes/get/
- * - POST: routes/post/
- * - PATCH: routes/patch/
- * - PUT: routes/put/
- * - DELETE: routes/delete/
- */
-
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
@@ -51,7 +40,7 @@ app.use(errorHandler);
 await connectToMongoDB();
 
 app.listen(ENV.PORT, () => {
-  console.log(`🚀 BookNook running on http://localhost:${ENV.PORT}`);
+  console.log(`🚀 BookNook - Backend running on ${ENV.PORT}`);
 });
 
 export default app;
