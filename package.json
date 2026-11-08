@@ -1,22 +1,21 @@
 {
   "name": "booksnook_backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "BookNook Peer-to-Peer Community Library Backend API",
   "license": "ISC",
   "author": "",
   "type": "module",
   "main": "index.ts",
   "scripts": {
-  "dev": "nodemon --exec tsx index.ts",
-  "build": "tsc",
-  "start": "tsx index.ts"
-},
+    "dev": "tsx watch index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^18.0.9",
     "express": "^5.3.0",
     "jose": "^6.2.14",
-    "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.8.0"
   },
   "devDependencies": {

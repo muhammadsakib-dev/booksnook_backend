@@ -35,10 +35,10 @@ router.get(
 
     // Sort options
     let sortOptions: Record<string, any> = { createdAt: -1 };
-    if (sort === "copies-desc") {
-      sortOptions = { availableCopies: -1 };
+    if (sort === "copies-desc" || sort === "available") {
+      sortOptions = { availableCopies: -1, createdAt: -1 };
     } else if (sort === "rating") {
-      sortOptions = { rating: -1 };
+      sortOptions = { rating: -1, createdAt: -1 };
     } else if (sort === "title-asc") {
       sortOptions = { title: 1 };
     }

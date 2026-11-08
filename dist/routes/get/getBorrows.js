@@ -9,7 +9,10 @@ const router = Router();
 router.get("/borrows", authenticate, asyncHandler(async (req, res) => {
     const db = getDb();
     const borrowsCollection = db.collection("borrows");
-    const query = { userId: req.user.id };
+    const isOwnerRole = req.query.role === "owner";
+    const query = isOwnerRole
+        ? { ownerUserId: req.user.id }
+        : { userId: req.user.id };
     if (req.query.status && req.query.status !== "all") {
         query.status = req.query.status;
     }
@@ -31,9 +34,6 @@ router.get("/borrows", authenticate, asyncHandler(async (req, res) => {
         statusCode: 200,
         message: "Borrow records retrieved successfully",
         data: borrows,
-        extra: {
-            borrows,
-        },
     });
 }));
 export default router;

@@ -1,3 +1,4 @@
+// routes/get/getHealth.ts
 import { Router } from "express";
 import { sendSuccess } from "../../utils/apiResponse.js";
 const router = Router();
@@ -6,7 +7,7 @@ router.get("/", (_req, res) => {
     return sendSuccess(res, {
         message: "BookNook Backend Service is Running!",
         data: {
-            version: "1.0.0",
+            version: "2.0.0",
             status: "healthy",
             service: "BookNook API",
         },

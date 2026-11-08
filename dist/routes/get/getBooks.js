@@ -20,22 +20,20 @@ router.get("/books", asyncHandler(async (req, res) => {
     // Search by title or author
     if (search && typeof search === "string" && search.trim()) {
         const cleanSearch = search.trim();
-        const searchRegex = new RegExp(cleanSearch, "i");
+        const escapedSearch = cleanSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const searchRegex = new RegExp(escapedSearch, "i");
         filter.$or = [{ title: searchRegex }, { author: searchRegex }];
     }
     // Sort options
     let sortOptions = { createdAt: -1 };
-    if (sort === "copies-desc") {
-        sortOptions = { availableCopies: -1 };
+    if (sort === "copies-desc" || sort === "available") {
+        sortOptions = { availableCopies: -1, createdAt: -1 };
     }
     else if (sort === "rating") {
-        sortOptions = { rating: -1 };
+        sortOptions = { rating: -1, createdAt: -1 };
     }
     else if (sort === "title-asc") {
         sortOptions = { title: 1 };
-    }
-    else if (sort === "newest") {
-        sortOptions = { createdAt: -1 };
     }
     // Pagination
     const isPaginated = page !== undefined || limit !== undefined;
@@ -57,7 +55,6 @@ router.get("/books", asyncHandler(async (req, res) => {
                     total,
                     totalPages: Math.ceil(total / limitNum),
                 },
-                books,
             },
         });
     }
@@ -66,9 +63,6 @@ router.get("/books", asyncHandler(async (req, res) => {
         statusCode: 200,
         message: "Books catalog retrieved successfully",
         data: books,
-        extra: {
-            books,
-        },
     });
 }));
 export default router;

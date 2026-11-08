@@ -1,40 +1,42 @@
-# 🛠 BookNook — High-Integrity Library Management API (Backend)
+# 🛠 BookNook — High-Integrity Community Library Backend API
 
 [![Node.js](https://img.shields.io/badge/Node.js-v20%2B-green?logo=node.js)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-v5.3.0-lightgrey?logo=express)](https://expressjs.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-ES2022-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Native_Driver_v7.8-green?logo=mongodb)](https://www.mongodb.com/)
 [![Jose](https://img.shields.io/badge/Jose-v6.2-orange)](https://github.com/panva/jose)
-[![Tests](https://img.shields.io/badge/Tests-31%2F31_Passing-success)](tests/)
 
-> **BookNook Backend** is an enterprise-grade RESTful API built with **Express 5** and the **MongoDB Native Driver** (no Mongoose). It powers the BookNook community library with atomic concurrency controls, multi-book transaction guarantees, stateless BetterAuth JWT verification, and automated database migrations.
+> **BookNook Backend** is an enterprise-grade RESTful API built with **Express 5**, **TypeScript**, and the **MongoDB Native Driver** (no Mongoose). It powers the BookNook community library with atomic concurrency controls, peer-to-peer borrow approvals, stateless BetterAuth JWT verification, and automated database safeguards.
 
 ---
 
 ## 🏛 Core Architectural Highlights
 
-1. **Native MongoDB Driver (No ORM Bloat)**: Pure, optimized BSON database interactions with indexed queries, explicit projections, and connection pooling.
-2. **Atomic Inventory & Transaction Engine**:
-   - Multi-book batch checkout within native MongoDB replica set transactions (`client.startSession()`).
-   - Non-replica set safe compensation fallback for single-node environments.
-   - Atomic conditional stock decrements (`availableCopies >= quantity`).
-   - Double-borrow prevention via unique partial database indexes.
+1. **Native MongoDB Driver (No ORM Bloat)**: Pure, optimized BSON database interactions with indexed queries, explicit projections, connection pooling, and zero Mongoose overhead.
+2. **Atomic Inventory & Concurrency Engine**:
+   - Atomic conditional stock decrements (`availableCopies: { $gte: quantity }`).
+   - Duplicate active loan prevention (`status: { $in: ["Active", "Pending", "Return Pending"] }`).
+   - Contributor inventory boundary guards: `totalCopies` cannot be reduced below books currently held by readers.
+   - In-flight deletion guards: Books cannot be deleted while active or pending loans exist.
 3. **Stateless JWT & JWKS Verification**:
-   - Cryptographically verifies Bearer tokens issued by the Next.js BetterAuth frontend.
-   - Enforces valid cryptographic signatures, token expiration, Issuer (`TOKEN_ISSUER`), and Audience (`TOKEN_AUDIENCE`).
-   - Extracts subject (`sub`), email, and name claims directly into `req.user`.
-4. **Automated Migration & Index Provisioning**:
-   - Automatically provisions partial unique indexes and query indexes on server startup.
-   - Normalizes legacy documents without data loss.
+   - Cryptographically verifies Bearer tokens issued by the Next.js BetterAuth frontend using `jose`.
+   - Supports remote JWKS fetching with seamless fallback to symmetric secret verification (`BETTER_AUTH_SECRET`).
+   - Populates `req.user = { id, email, name, role }` across all authenticated endpoints.
+4. **Production-Ready Multi-Environment Support**:
+   - Graceful shutdown listeners (`SIGINT`, `SIGTERM`) for zero-downtime server updates.
+   - Built-in `vercel.json` for serverless deployment on Vercel.
+   - Compiled JavaScript output in `dist/` for production Node.js environments (Render, Railway, VPS).
 
 ---
 
 ## 📦 Tech Stack
 
 - **Runtime**: Node.js (ES Modules, `"type": "module"`)
-- **Web Framework**: Express.js 5.3.0
-- **Database**: MongoDB Native Driver 7.8.0
-- **Cryptographic Security**: `jose` 6.2.14 & `jsonwebtoken` 9.0.3
-- **Test Runner**: Node.js Built-in Test Runner (`node --test`)
+- **Language**: TypeScript (`tsconfig.json`, target: `ES2022`, module: `NodeNext`)
+- **Web Framework**: Express.js `5.3.0`
+- **Database Driver**: MongoDB Native Driver `7.8.0`
+- **Cryptographic Security**: `jose` `6.2.14`
+- **Development Tooling**: `tsx` (TypeScript Execute)
 
 ---
 
@@ -43,37 +45,40 @@
 ```
 booksnook_backend/
 ├── config/
-│   ├── db.js                 # MongoDB connection pool & singleton manager
-│   └── env.js                # Centralized environment configuration
+│   ├── db.ts                 # MongoDB connection pool, caching & graceful close
+│   └── env.ts                # Sanitized environment configuration with safe fallbacks
 ├── middleware/
-│   ├── authenticate.js       # BetterAuth Bearer JWT verification
-│   ├── errorHandler.js       # Centralized 404 & error handling
-│   └── security.js           # NoSQL injection input sanitization
-├── modules/
-│   ├── books/                # Books catalog, CRUD & ownership routes
-│   │   ├── books.controller.js
-│   │   ├── books.routes.js
-│   │   ├── books.service.js
-│   │   └── books.validator.js
-│   └── borrows/              # Borrow reservations & return processing
-│       ├── borrows.controller.js
-│       ├── borrows.routes.js
-│       ├── borrows.service.js
-│       └── borrows.validator.js
+│   ├── authenticate.ts       # Stateless BetterAuth Bearer JWT verification
+│   ├── errorHandler.ts       # Centralized 404 & structured error handler
+│   └── security.ts           # NoSQL operator injection sanitizer
 ├── routes/
-│   ├── getRoutes.js          # All GET routes (catalog, book details, borrows, health)
-│   ├── postRoutes.js         # All POST routes (add book, borrow checkout)
-│   ├── updateRoutes.js       # All PATCH & PUT routes (edit book, return loan)
-│   └── deleteRoutes.js       # All DELETE routes (soft delete, return loan)
+│   ├── get/                  # GET endpoints (catalog, book details, borrows, health)
+│   │   ├── getBooks.ts
+│   │   ├── getBookById.ts
+│   │   ├── getBorrows.ts
+│   │   └── getHealth.ts
+│   ├── post/                 # POST endpoints (add book, batch borrow request)
+│   │   ├── addBook.ts
+│   │   └── borrowBooks.ts
+│   ├── patch/                # PATCH & PUT endpoints (update book details)
+│   │   └── updateBook.ts
+│   ├── put/                  # PUT endpoints (P2P approval, decline, return workflows)
+│   │   ├── approveBorrowPut.ts
+│   │   └── returnBorrowPut.ts
+│   └── delete/               # DELETE endpoints (safe soft-delete)
+│       └── deleteBook.ts
 ├── services/
-│   ├── inventoryService.js   # Atomic transactions, batch checkouts & returns
-│   └── migrationService.js   # Safe index provisioning & data normalizer
+│   └── inventoryService.ts   # Core business logic: atomic loans, approvals & bounds
 ├── utils/
-│   ├── apiResponse.js        # Standardized JSend-style JSON responses
-│   ├── AppError.js           # Structured operational error class
-│   ├── asyncHandler.js       # Async controller wrapper
-│   └── idHelper.js           # Safe ObjectId parser and validator
-├── index.js                  # Main server entry point & Express configuration
+│   ├── apiResponse.ts        # Standardized JSend JSON envelopes
+│   ├── AppError.ts           # Operational error class
+│   ├── asyncHandler.ts       # Express async route wrapper
+│   ├── idHelper.ts           # Safe ObjectId and query helper
+│   └── parseBookUpdate.ts    # Update body validator and sanitizer
+├── dist/                     # Compiled production JavaScript files
+├── index.ts                  # Main Express entry point with CORS & graceful shutdown
+├── vercel.json               # Vercel serverless deployment configuration
+├── tsconfig.json             # TypeScript compiler configuration
 └── package.json
 ```
 
@@ -94,95 +99,61 @@ All responses adhere to the standard BookNook API contract:
 
 | Method | Endpoint | Auth | Description |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/books` | Public | List catalog books with search, category filtering, and sorting. Excludes soft-deleted books. |
+| `GET` | `/books` | Public | List catalog books with search, category filtering, multi-criterion sorting, and pagination. |
 | `GET` | `/books/:id` | Public | Retrieve single book details. Returns 404 if not found or soft-deleted. |
-| `POST` | `/books` | Required | Create a new book. Sets `ownerUserId` from JWT and initializes `availableCopies = totalCopies`. |
-| `PATCH` | `/books/:id` | Required (Owner) | Update editable fields. Prevents decreasing `totalCopies` below currently loaned copies. |
-| `DELETE` | `/books/:id` | Required (Owner) | Soft-deletes a book. **Permanently blocks deletion if active loans exist.** |
+| `POST` | `/books` | Required | Create a new book. Sets `ownerUserId` from JWT and initializes available shelf copies. |
+| `PATCH` | `/books/:id` | Required (Owner) | Update editable fields with active loan inventory lower-bound guard. |
+| `DELETE` | `/books/:id` | Required (Owner) | Soft-delete a book. Blocked if any pending or active loans exist. |
 
-### 2. Borrows API (`/borrows`)
-
-| Method | Endpoint | Auth | Description |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/borrows` | Required | Retrieve active and historical loan records for the authenticated user only. |
-| `POST` | `/borrows` | Required | Checkout one or multiple books atomically with a 14-day loan period. |
-| `DELETE` | `/borrows/:id` | Required (Borrower) | Return borrowed book, increment `availableCopies`, and record `returnedAt`. Rejects double returns. |
-
-### 3. System Endpoints
+### 2. Peer-to-Peer (P2P) Borrowing & Approvals (`/borrows`)
 
 | Method | Endpoint | Auth | Description |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/health` | Public | Service health status, uptime, and timestamp. |
-| `GET` | `/` | Public | Service banner and API version. |
-| `GET` | `/inventory/reconcile` | Required | Operational inventory reconciliation report comparing physical copies vs active loans. |
+| `GET` | `/borrows` | Required | List logged-in user's active, pending, or returned loans. |
+| `GET` | `/borrows?role=owner` | Required | List incoming borrow requests and return approvals for contributor's books. |
+| `POST` | `/borrows` | Required | Submit a borrow request (single or multi-book batch). Reserves copies conditionally. |
+| `PUT` | `/borrows/:id/approve` | Required (Contributor) | Approve a pending borrow request. Activates 14-day loan window. |
+| `PUT` | `/borrows/:id/reject` | Required (Contributor/Borrower) | Decline (contributor) or cancel (borrower) request. Restores reserved copies. |
+| `PUT` | `/borrows/:id/request-return` | Required (Borrower) | Initiate return request. Marks loan as `Return Pending`. |
+| `PUT` | `/borrows/:id/approve-return` | Required (Contributor) | Confirm physical receipt of book. Marks as `Returned` and restores shelf stock. |
+
+### 3. System & Health
+
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/` | Public | Service heartbeat and version banner. |
+| `GET` | `/health` | Public | Health status, server uptime, and timestamp. |
 
 ---
 
-## 🧪 Comprehensive Automated Testing
+## ⚙️ Environment Variables
 
-The backend includes 31 unit, concurrency, security, and integration tests covering all business requirements:
+Create a `.env` file in the `booksnook_backend` root directory (see `.env.example`):
 
-```bash
-npm test
-```
-
-### Test Coverage Highlights:
-- **Phase 05 Route Suite**: GET catalog, POST book, PATCH inventory constraints, DELETE active loan guards.
-- **Phase 04 Concurrency & Atomic Suite**: Final-copy competition ($1$ copy remaining, $2$ concurrent requests), batch all-or-nothing rollback.
-- **Phase 09 Security Suite**: JWT tampering, forged signatures, expired tokens, invalid issuer/audience, reader isolation (User B cannot see or return User A's loans).
-- **Date Calculation Suite**: Exact 14 calendar days due date calculation and status conditions (*Active*, *Due Today*, *Overdue*).
-
----
-
-## 🚀 Getting Started Locally
-
-### 1. Install Dependencies
-```bash
-cd booksnook_backend
-npm install
-```
-
-### 2. Configure Environment Variables
-Copy `.env.example` to `.env`:
-```bash
-cp .env.example .env
-```
-
-Set your local values:
 ```env
 PORT=8000
 NODE_ENV=development
-MONGODB_URL=mongodb+srv://<user>:<password>@cluster0.mongodb.net/?retryWrites=true&w=majority
+API_URL=http://localhost:8000
+APP_URL=http://localhost:3000
+BETTER_AUTH_SECRET=A6aErmnfAplYP1ZxrLMyAPzbsRlzcbTr
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.p16xpfx.mongodb.net/
 DB_NAME=assignment-08
-ALLOWED_ORIGIN=http://localhost:3000
-BETTER_AUTH_SECRET=your_32_character_jwt_secret_matching_frontend
-TOKEN_ISSUER=http://localhost:3000
-TOKEN_AUDIENCE=http://localhost:8000
 ```
-
-### 3. Start the Server
-```bash
-npm start
-```
-The server will connect to MongoDB, verify indexes, and listen at [http://localhost:8000](http://localhost:8000).
 
 ---
 
-## 🌐 Production Deployment (Render)
+## 🚀 Running Locally & Production Build
 
-1. Create a new **Web Service** on [Render](https://render.com).
-2. Connect your GitHub backend repository.
-3. Configuration:
-   - **Environment**: Node
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
-4. Set Environment Variables on Render:
-   - `NODE_ENV`: `production`
-   - `MONGODB_URL`: Your MongoDB Atlas connection URI.
-   - `DB_NAME`: `assignment-08`
-   - `BETTER_AUTH_SECRET`: The exact same secret configured on Vercel.
-   - `ALLOWED_ORIGIN`: Your frontend Vercel URL (e.g. `https://booknook-client.vercel.app`).
-   - `TOKEN_ISSUER`: Your frontend BetterAuth URL (e.g. `https://booknook-client.vercel.app`).
-   - `TOKEN_AUDIENCE`: Your Render backend URL (e.g. `https://booknook-api.onrender.com`).
-5. Render will automatically expose `PORT` and route traffic to your service. Verify using `GET /health`.
+```bash
+# 1. Install dependencies
+npm install
 
+# 2. Run in development mode (hot-reload via tsx)
+npm run dev
+
+# 3. Compile TypeScript for production
+npm run build
+
+# 4. Start production server (runs compiled dist/index.js)
+npm run start
+```

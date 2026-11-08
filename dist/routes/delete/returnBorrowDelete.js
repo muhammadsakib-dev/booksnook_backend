@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getDb, getClient } from "../../config/db.js";
+import { getDb } from "../../config/db.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
@@ -17,9 +17,7 @@ router.delete("/borrows/:id", authenticate, asyncHandler(async (req, res) => {
         throw new AppError("Malformed ObjectId parameter", 400, "INVALID_ID");
     }
     const db = getDb();
-    const client = getClient();
     const result = await returnBook({
-        client,
         db,
         user: req.user,
         borrowId: id,
@@ -28,7 +26,6 @@ router.delete("/borrows/:id", authenticate, asyncHandler(async (req, res) => {
         statusCode: 200,
         message: "Book returned successfully. Inventory updated.",
         data: result,
-        extra: result,
     });
 }));
 export default router;

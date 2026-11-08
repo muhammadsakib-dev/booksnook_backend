@@ -24,9 +24,6 @@ router.get("/books/:id", asyncHandler(async (req, res) => {
         statusCode: 200,
         message: "Book details retrieved successfully",
         data: book,
-        extra: {
-            book,
-        },
     });
 }));
 export default router;

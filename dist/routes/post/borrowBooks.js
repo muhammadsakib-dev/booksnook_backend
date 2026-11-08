@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getDb, getClient } from "../../config/db.js";
+import { getDb } from "../../config/db.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { sendSuccess } from "../../utils/apiResponse.js";
@@ -49,9 +49,7 @@ router.post("/borrows", authenticate, asyncHandler(async (req, res) => {
         validatedItems.push({ bookId, quantity: qty });
     }
     const db = getDb();
-    const client = getClient();
     const createdBorrows = await borrowBooks({
-        client,
         db,
         user: req.user,
         items: validatedItems,
@@ -62,10 +60,6 @@ router.post("/borrows", authenticate, asyncHandler(async (req, res) => {
         statusCode: 201,
         message,
         data: createdBorrows,
-        extra: {
-            borrow: createdBorrows[0],
-            borrows: createdBorrows,
-        },
     });
 }));
 export default router;

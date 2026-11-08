@@ -8,10 +8,10 @@ import { isValidObjectId } from "../../utils/idHelper.js";
 import { updateBook } from "../../services/inventoryService.js";
 import { parseBookUpdateBody } from "../../utils/parseBookUpdate.js";
 const router = Router();
-// Update book (PATCH /books/:id)
-router.patch("/books/:id", authenticate, asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    if (!id || typeof id !== "string" || !id.trim()) {
+// Handler for updating book details
+const handleUpdateBook = asyncHandler(async (req, res) => {
+    const id = String(req.params.id || "").trim();
+    if (!id) {
         throw new AppError("Book ID parameter is required", 400, "INVALID_ID");
     }
     if (id.length === 24 && !isValidObjectId(id)) {
@@ -30,5 +30,10 @@ router.patch("/books/:id", authenticate, asyncHandler(async (req, res) => {
         message: "Book updated successfully",
         data: result,
     });
-}));
+});
+// Support both PATCH and PUT on /books/:id
+router
+    .route("/books/:id")
+    .patch(authenticate, handleUpdateBook)
+    .put(authenticate, handleUpdateBook);
 export default router;

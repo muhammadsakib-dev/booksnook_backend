@@ -1,3 +1,4 @@
+// Ready
 import { Router } from "express";
 import { getDb } from "../../config/db.js";
 import { authenticate } from "../../middleware/authenticate.js";
@@ -52,7 +53,6 @@ router.post("/books", authenticate, asyncHandler(async (req, res) => {
         data: createdBook,
         extra: {
             insertedId: createdBook._id,
-            book: createdBook,
         },
     });
 }));

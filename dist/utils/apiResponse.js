@@ -1,3 +1,4 @@
+// utils/apiResponse.ts
 export function sendSuccess(res, { statusCode = 200, message = "Operation successful", data = null, extra = {} }) {
     const payload = {
         success: true,

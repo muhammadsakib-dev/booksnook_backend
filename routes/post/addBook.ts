@@ -1,3 +1,5 @@
+// Ready
+
 import { Router, Request, Response } from "express";
 import { getDb } from "../../config/db.js";
 import { authenticate } from "../../middleware/authenticate.js";
